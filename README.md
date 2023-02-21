@@ -98,4 +98,6 @@ F	F	F
 ```
 Note that in the tables above, "U/U" stands for "Unknown/Unknown," which represents the result when one or both of the operands are unknown in ternary logic.
 
+## Ref
+- https://github.com/SteveJustin1963/tec-MINT
 
