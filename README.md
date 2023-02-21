@@ -1,0 +1,2 @@
+# tec-ternary-
+tri logic
