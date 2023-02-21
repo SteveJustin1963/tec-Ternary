@@ -28,3 +28,72 @@ To define an array with 16 bits elements, you can use the syntax array 16bits	wi
 > ctr-p 3368 00004
 ```
 thats a very simple database, but it can represent world data picked up from sensors. etc
+
+
+## truth tables for the ternary logical operators:
+
+## Ternary OR Operator:
+```
+A	B	A OR B
+T	T	T
+T	U	T
+T	F	T
+U	T	T
+U	U	U/U
+U	F	U/U
+F	T	T
+F	U	U/U
+F	F	F
+```
+
+## Ternary AND Operator:
+```
+A	B	A AND B
+T	T	T
+T	U	U/U
+T	F	F
+U	T	U/U
+U	U	U/U
+U	F	F
+F	T	F
+F	U	U/U
+F	F	F
+```
+
+## Ternary NAND Operator:
+```
+A	B	A NAND B
+T	T	F
+T	U	U/U
+T	F	U
+U	T	U/U
+U	U	U/U
+U	F	U
+F	T	U/U
+F	U	U/U
+F	F	T
+```
+
+## Ternary NOT Operator:
+```
+A	NOT A
+T	F
+U	U/U
+F	T
+```
+## Ternary XOR Operator:
+```
+A	B	A XOR B
+T	T	F
+T	U	U/U
+T	F	T
+U	T	U/U
+U	U	U/U
+U	F	U/U
+F	T	T
+F	U	U/U
+F	F	F
+```
+Note that in the tables above, "U/U" stands for "Unknown/Unknown," which represents the result when one or both of the operands are unknown in ternary logic.
+
+
