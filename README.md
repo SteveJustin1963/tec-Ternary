@@ -23,6 +23,7 @@ An indexed file database uses an index file to improve the performance of data a
 
 Both of these database types can be implemented in assembly language on a Z80 CPU, with file I/O operations handled using the Z80's standard input/output instructions. While these databases are relatively simple and limited in capacity, they can be useful for small-scale applications that don't require the features and scalability of a full-fledged relational database system.
 
+## Mint
 To define an array with 16 bits elements, you can use the syntax array 16bits	with `[`	begins an array definition. When you create an array you get it's address and length	stack <2x address> <2x length>, for eg
 ```
 > [1 2 3 4]
