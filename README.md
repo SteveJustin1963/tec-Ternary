@@ -1,5 +1,4 @@
-# tec-ternary-
-tri logic
+# tec-ternary-tri logic
 
 
 As an 8-bit CPU robot, SQL can be thought of as a set of instructions that allow the robot to perform database operations. The robot can use SQL instructions to read, write, update, and delete data from the database.
