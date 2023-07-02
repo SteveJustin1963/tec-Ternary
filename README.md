@@ -98,6 +98,94 @@ F	F	F
 ```
 Note that in the tables above, "U/U" stands for "Unknown/Unknown," which represents the result when one or both of the operands are unknown in ternary logic.
 
+
+##  GPIO Motor Controller with Unknown State Handling
+
+This code provides a basic interface for controlling three motors through General Purpose Input/Output (GPIO) pins using the WiringPi library. It is specifically designed for a Raspberry Pi, but could be adapted for other platforms. 
+
+Here's a high-level overview of what each part of the program does:
+
+- **MotorState Enum**: This enumeration defines the possible states a motor can be in: ON, OFF, or UNKNOWN. This is useful for providing clear, human-readable status values for each motor, and can be easily expanded if more states are required.
+
+- **initializeMotorPins Function**: This function is called at the beginning of the program to initialize the WiringPi library and set the mode of each motor's control pin to OUTPUT. 
+
+- **controlMotors Function**: This function takes the desired state for each motor as input and sets the appropriate GPIO pin to either HIGH (turn the motor on) or LOW (turn the motor off) depending on the provided state. If the motor state is UNKNOWN, the pin is set to LOW as a default safe behavior.
+
+- **handleUnknownState Function**: This function is called when the state of any of the motors is UNKNOWN. It currently doesn't do anything, but in a real application it might try to determine the actual state of the motors (perhaps by reading sensor data), or trigger some kind of alert or failsafe behavior.
+
+- **main Function**: This is the entry point of the program. It first calls `initializeMotorPins` to set up the GPIO pins. Then it sets up a hypothetical scenario where the states of the three motors are defined (in this case, the first motor is ON, the second is OFF, and the third is UNKNOWN). It then checks if any of the motors are in an UNKNOWN state and, if so, calls `handleUnknownState`. If none of the motors are in an UNKNOWN state, it calls `controlMotors` to apply the desired states to the motors.
+
+In summary, this program provides a template for controlling motors with the ability to handle unknown states. However, in its current form, it's not a complete application; it would need to be incorporated into a larger program that provides the necessary context (e.g., why and when the motors should be turned on or off) and additional functionality (e.g., determining the actual state of the motors when their state is UNKNOWN).
+
+```c
+#include <stdio.h>
+#include <stdbool.h>
+#include <wiringPi.h>  // Assuming you're using WiringPi library for GPIO control
+
+// Motor pin definitions
+#define MOTOR1_PIN 2
+#define MOTOR2_PIN 3
+#define MOTOR3_PIN 4
+
+// Motor state enumeration
+typedef enum {
+    OFF,    // Motor is off
+    ON,     // Motor is on
+    UNKNOWN // Motor state is unknown
+} MotorState;
+
+// Function to initialize motor control pins
+void initializeMotorPins() {
+    wiringPiSetup();  // Initialize WiringPi library
+    pinMode(MOTOR1_PIN, OUTPUT);
+    pinMode(MOTOR2_PIN, OUTPUT);
+    pinMode(MOTOR3_PIN, OUTPUT);
+}
+
+// Function to control the motors based on the decision
+void controlMotors(MotorState motor1State, MotorState motor2State, MotorState motor3State) {
+    digitalWrite(MOTOR1_PIN, motor1State == ON ? HIGH : LOW);
+    digitalWrite(MOTOR2_PIN, motor2State == ON ? HIGH : LOW);
+    digitalWrite(MOTOR3_PIN, motor3State == ON ? HIGH : LOW);
+}
+
+// Function to handle the "unknown" state for motors
+void handleUnknownState() {
+    // Perform necessary actions while waiting for sensor updates or determining the motor state
+    // You can add additional logic or function calls here based on your specific requirements
+    // For example, you can implement a sensor update function or set a flag to indicate the unknown state
+}
+
+int main() {
+    // Initialize motor control pins
+    initializeMotorPins();
+
+    // Example decision using ternary logic
+    MotorState motor1State = ON;
+    MotorState motor2State = OFF;
+    MotorState motor3State = UNKNOWN;
+
+    // Check if any motor state is unknown
+    if (motor1State == UNKNOWN || motor2State == UNKNOWN || motor3State == UNKNOWN) {
+        handleUnknownState();
+    } else {
+        // Control the motors based on the decision
+        controlMotors(motor1State, motor2State, motor3State);
+    }
+
+    // Rest of the application logic...
+
+    return 0;
+}
+```
+
+In this updated code, I've introduced the `MotorState` enum which has three possible values: `ON`, `OFF`, and `UNKNOWN`. This provides a clearer way to represent the state of each motor compared to using a `bool`. 
+
+I also updated the `controlMotors` function to accept `MotorState` arguments, and updated the `digitalWrite` calls to only turn on the motors if their state is `ON`.
+
+Lastly, in the `main` function, I changed the check for an unknown motor state to use the `UNKNOWN` enum value. If any of the motors are in an `UNKNOWN` state, the `handleUnknownState` function is called. Otherwise, the `controlMotors` function is called as before.
+
+
 ## Ref
 - https://github.com/SteveJustin1963/tec-MINT
 
