@@ -1,129 +1,561 @@
+- https://github.com/SteveJustin1963/tec-MINT
+
 # tec-Ternary
 
 ## Tri Logic
 
+# SQL and Three-Valued Logic on 8-bit Systems
 
-As an 8-bit CPU robot, SQL can be thought of as a set of instructions that allow the robot to perform database operations. The robot can use SQL instructions to read, write, update, and delete data from the database.
+## Three-Valued Logic Foundation
+SQL's fundamental operation relies on three-valued (ternary) logic, distinct from binary logic used in typical CPU operations. The three states are:
+- TRUE (typically represented as 01)
+- FALSE (typically represented as 00)
+- UNKNOWN (typically represented as 10)
 
-When the robot encounters missing data in the database, it can use ternary logic to handle comparisons with NULL values. In the CPU's register, NULL values can be represented as a special value, such as 0xFF, to indicate that the data is missing.
+When implementing on 8-bit systems, each logical value requires 2 bits for proper representation. This means a single byte can store 4 logical values.
 
-The robot can also use special instructions to handle NULL values, such as a conditional jump instruction that checks for NULL values before making a decision.
+## NULL Value Implementation
+NULL values in SQL represent unknown data, not just missing data. The implementation requires:
+1. Two bits per logical value for proper three-valued logic representation
+2. Special comparison operators that handle the UNKNOWN state
+3. Truth tables that correctly propagate UNKNOWN through logical operations
 
-To ensure consistent handling of NULL values, the CPU can use a standard protocol for NULL representation and comparison. This protocol can include rules for set operations like UNION or INTERSECT, to ensure that NULL values are treated consistently across different database operations.
-
-Overall, SQL provides a powerful set of instructions for the 8-bit CPU robot to manage and manipulate data in a database, even when some data is missing or incomplete.
-
-A simple 8-bit database that can run on a Z80 CPU is typically implemented using flat files or indexed files. Here are two examples:
-
-Flat file database:
-A flat file database is a simple way to store data in a flat file with fixed-length records. Each record in the file represents a row in the database table, and the fields in the record represent the columns in the table. The Z80 CPU can read and write to the file using standard file I/O instructions.
-
-Indexed file database:
-An indexed file database uses an index file to improve the performance of data access. The index file contains pointers to the data file, allowing the Z80 CPU to quickly retrieve data based on a key field. The index file can be implemented as a binary tree or a hash table, depending on the complexity of the database and the available memory.
-
-Both of these database types can be implemented in assembly language on a Z80 CPU, with file I/O operations handled using the Z80's standard input/output instructions. While these databases are relatively simple and limited in capacity, they can be useful for small-scale applications that don't require the features and scalability of a full-fledged relational database system.
-
-## Mint
-To define an array with 16 bits elements, you can use the syntax array 16bits	with `[`	begins an array definition. When you create an array you get it's address and length	stack <2x address> <2x length>, for eg
+For example, the truth table for AND operations would be:
 ```
-> [1 2 3 4]
-> ctr-p 3368 00004
-```
-thats a very simple database, but it can represent world data picked up from sensors. etc
-
-
-## truth tables for the ternary logical operators:
-
-## Ternary OR Operator:
-```
-A	B	A OR B
-T	T	T
-T	U	T
-T	F	T
-U	T	T
-U	U	U/U
-U	F	U/U
-F	T	T
-F	U	U/U
-F	F	F
+AND      | TRUE    | FALSE   | UNKNOWN
+---------|---------|---------|--------
+TRUE     | TRUE    | FALSE   | UNKNOWN
+FALSE    | FALSE   | FALSE   | FALSE
+UNKNOWN  | UNKNOWN | FALSE   | UNKNOWN
 ```
 
-## Ternary AND Operator:
+## 8-bit Database Implementation
+On an 8-bit CPU like the Z80, a basic database system can be implemented with several key components:
+
+### Storage Structure
+1. Fixed-length Record Files
+- Header block containing schema information
+- Data blocks with fixed-length records
+- Each field requires an additional status bit for NULL tracking
+
+2. Index Files
+- B-tree structure limited to available memory
+- Index nodes containing:
+  - Key value
+  - NULL indicator bits
+  - Block pointer (16-bit address)
+
+### Memory Management
+Given the Z80's 64KB address space:
+- Buffer pool for active data pages (typically 1-4KB)
+- Index cache for frequently accessed nodes
+- Working memory for query processing
+
+### Query Processing
+1. Sequential Operations
+```z80
+; Example Z80 pseudocode for NULL-aware comparison
+CompareWithNull:
+    ld a, (FieldStatus)    ; Load NULL status
+    bit 7, a              ; Check NULL bit
+    jr nz, HandleNull     ; Jump if NULL
+    ; Normal comparison code
+    ret
+HandleNull:
+    ld a, UNKNOWN_FLAG    ; Load UNKNOWN result
+    ret
 ```
-A	B	A AND B
-T	T	T
-T	U	U/U
-T	F	F
-U	T	U/U
-U	U	U/U
-U	F	F
-F	T	F
-F	U	U/U
-F	F	F
+
+2. Index Operations
+- Traverse B-tree with NULL-aware comparisons
+- Handle UNKNOWN results in branch decisions
+
+### Limitations
+1. Memory Constraints
+- Maximum database size limited by addressable storage
+- Index depth restricted by available RAM
+- Buffer pool size affects performance
+
+2. Performance
+- Three-valued logic comparisons require more CPU cycles
+- Complex operations like JOINs require careful memory management
+- Index maintenance overhead is significant
+
+## Real-world Applications
+This implementation would be suitable for:
+- Embedded systems requiring structured data storage
+- Small-scale data management applications
+- Systems with limited memory resources
+
+The system trades off functionality for reliability within hardware constraints. While not suitable for large-scale applications, it provides a solid foundation for understanding how SQL's three-valued logic can be implemented on constrained hardware.
+
+### Implementation Considerations
+When implementing this system, particular attention must be paid to:
+- Memory allocation and deallocation strategies
+- Buffer management to minimize disk I/O
+- Proper propagation of NULL values through calculations
+- Transaction boundary management within memory constraints
+
+# Implementation on 8-bit systems, specifically focusing on the Z80 architecture. 
+
+# Three-Valued Logic and Database Implementation on 8-bit Systems
+
+## Three-Valued Logic Foundation
+
+SQL uses three-valued (ternary) logic for handling NULL values, which is fundamentally different from the binary logic typically used in CPU operations. The three logical states are:
+
+- TRUE (typically represented as 01)
+- FALSE (typically represented as 00) 
+- UNKNOWN (typically represented as 10)
+
+### Truth Tables for Ternary Logic
+
+#### AND Operation
+```
+AND      | TRUE    | FALSE   | UNKNOWN
+---------|---------|---------|--------
+TRUE     | TRUE    | FALSE   | UNKNOWN
+FALSE    | FALSE   | FALSE   | FALSE  
+UNKNOWN  | UNKNOWN | FALSE   | UNKNOWN
 ```
 
-## Ternary NAND Operator:
+#### OR Operation
 ```
-A	B	A NAND B
-T	T	F
-T	U	U/U
-T	F	U
-U	T	U/U
-U	U	U/U
-U	F	U
-F	T	U/U
-F	U	U/U
-F	F	T
+OR       | TRUE    | FALSE   | UNKNOWN
+---------|---------|---------|--------
+TRUE     | TRUE    | TRUE    | TRUE   
+FALSE    | TRUE    | FALSE   | UNKNOWN
+UNKNOWN  | TRUE    | UNKNOWN | UNKNOWN
 ```
 
-## Ternary NOT Operator:
+#### NOT Operation
 ```
-A	NOT A
-T	F
-U	U/U
-F	T
+Value    | Result
+---------|--------
+TRUE     | FALSE
+FALSE    | TRUE
+UNKNOWN  | UNKNOWN
 ```
-## Ternary XOR Operator:
+
+## Implementation on 8-bit Systems
+
+### Memory Representation
+
+On an 8-bit system, representing three-valued logic requires careful consideration:
+
+1. Each logical value requires 2 bits for proper representation
+2. A single byte can store 4 three-valued logical values
+3. Bit patterns:
+   - 01: TRUE
+   - 00: FALSE 
+   - 10: UNKNOWN
+   - 11: Reserved (not used)
+
+### Database Implementation on Z80
+
+For a Z80-based database system supporting three-valued logic:
+
+1. Storage Structure:
+```assembly
+; Header block format
+DB      TYPE        ; 1 byte record type
+DW      LENGTH      ; 2 bytes record length
+DB      FLAGS       ; 1 byte flags (bit 7: NULL tracking)
 ```
-A	B	A XOR B
-T	T	F
-T	U	U/U
-T	F	T
-U	T	U/U
-U	U	U/U
-U	F	U/U
-F	T	T
-F	U	U/U
-F	F	F
+
+2. Record Format:
+```assembly
+; Fixed-length record structure
+DB      STATUS      ; NULL indicators (1 bit per field)
+DS      DATALEN     ; Actual data fields
 ```
-Note that in the tables above, "U/U" stands for "Unknown/Unknown," which represents the result when one or both of the operands are unknown in ternary logic.
+
+3. Index Structure:
+```assembly
+; B-tree node format
+DW      LEFT_PTR    ; Left child pointer
+DW      KEY_VAL     ; Key value
+DB      NULL_FLAGS  ; NULL status bits
+DW      RIGHT_PTR   ; Right child pointer
+```
+
+### Memory Management
+
+Given the Z80's 64KB address space, efficient memory management is crucial:
+
+1. Buffer Pool
+   - Typically 1-4KB reserved for active data pages
+   - Least Recently Used (LRU) page replacement
+   - Dirty page tracking for write optimization
+
+2. Index Cache
+   - Small cache (256-512 bytes) for frequently accessed nodes
+   - Direct mapped for performance
+   - Invalidation on updates
+
+3. NULL Handling
+```assembly
+; Example Z80 assembly for NULL comparison
+CheckNull:
+    LD   A,(IX+0)     ; Load NULL status byte
+    BIT  7,A          ; Check NULL bit
+    JR   NZ,IsNull    ; Jump if NULL
+    ; Normal comparison code
+    RET
+IsNull:
+    LD   A,UNKNOWN    ; Load UNKNOWN result (10)
+    RET
+```
+
+### Query Processing
+
+1. Sequential Scan with NULL Handling:
+```assembly
+SeqScan:
+    LD   IX,RECORD_PTR    ; Point to record
+    LD   A,(IX+STATUS)    ; Load NULL status
+    AND  FIELD_MASK       ; Check field NULL bit
+    JR   NZ,HandleNull    ; Handle NULL case
+    ; Process normal value
+    RET
+```
+
+2. Index Operations:
+```assembly
+IndexLookup:
+    LD   HL,ROOT_PTR      ; Load root node
+    LD   A,(HL)          ; Load key
+    CP   NULL_FLAG       ; Check for NULL
+    JR   Z,NullPath      ; Special NULL handling
+    ; Normal B-tree traversal
+    RET
+```
+
+## Implementation Considerations
+
+### Memory Constraints
+
+1. Database Size Limitations:
+   - Maximum database size: ~60KB (leaving room for code and buffers)
+   - Maximum record size: 256 bytes
+   - Maximum number of indexes: 8 (memory constraints)
+
+2. Performance Optimizations:
+   - Page-aligned buffers for faster access
+   - Bitmap for NULL tracking
+   - Minimal record header overhead
+
+### Query Execution
+
+1. Three-Valued Logic Evaluation:
+   - Use lookup tables for complex operations
+   - Cache common comparison results
+   - Short-circuit evaluation where possible
+
+2. Join Operations:
+   - Nested loop joins with NULL awareness
+   - Hash joins limited by memory
+   - Sort-merge joins for large datasets
+
+## Practical Limitations
+
+1. Hardware Constraints:
+   - Limited by Z80's 64KB address space
+   - No hardware floating-point support
+   - I/O bound by system bus speed
+
+2. Software Constraints:
+   - Limited transaction support
+   - Basic concurrency control
+   - Simple query optimization
+
+## Best Practices
+
+1. Database Design:
+   - Use fixed-length records where possible
+   - Minimize NULL usage
+   - Keep indexes small and focused
+
+2. Query Design:
+   - Avoid complex joins
+   - Use indexes effectively
+   - Consider NULL handling overhead
+
+3. Memory Management:
+   - Regular buffer pool cleanup
+   - Index cache maintenance
+   - Monitor memory fragmentation
 
 
-##  GPIO Motor Controller with Unknown State Handling
 
-`mcus.c`
-A basic interface for controlling three motors through General Purpose Input/Output (GPIO) pins using the WiringPi library is provided by this code. It is specifically designed for a Raspberry Pi, but could be adapted for other platforms. 
+# MINT Code Examples for Three-Valued Logic and Database Operations
 
-A high-level overview of what each part of the program does is given:
+## 1. Three-Valued Logic Implementation
 
-- The possible states a motor can be in (ON, OFF, or UNKNOWN) are defined by the MotorState Enum. This Enum provides clear, human-readable status values for each motor, and can be easily expanded if more states are required.
+### Basic Three-Valued Logic Storage
+```mint
+// Store three-valued logic in two bits:
+// 01 = TRUE
+// 00 = FALSE  
+// 10 = UNKNOWN
+// Variable t for TRUE, f for FALSE, u for UNKNOWN
 
-- At the beginning of the program, the initializeMotorPins Function is called to initialize the WiringPi library and set the mode of each motor's control pin to OUTPUT.
+:T #01 t! ;     // Define TRUE
+:F #00 f! ;     // Define FALSE  
+:U #10 u! ;     // Define UNKNOWN
+```
 
-- The controlMotors Function takes the desired state for each motor as input and sets the appropriate GPIO pin to either HIGH (turn the motor on) or LOW (turn the motor off) depending on the provided state. If the motor state is UNKNOWN, the pin is set to LOW as a default safe behavior.
+### Ternary AND Operation
+```mint
+:A              // Ternary AND function
+  b! a!         // Store inputs in a and b
+  a t = (       // If a is TRUE
+    b .         // Return b
+  ) /E (        // Else
+    a f = (     // If a is FALSE 
+      f .       // Return FALSE
+    ) /E (      // Else (a must be UNKNOWN)
+      b f = (   // If b is FALSE
+        f .     // Return FALSE
+      ) /E (    // Else
+        u .     // Return UNKNOWN
+      )
+    )
+  )
+;
+```
 
-- The handleUnknownState Function is called when the state of any of the motors is UNKNOWN. Currently, it doesn't perform any actions, but in a real application, it might attempt to determine the actual state of the motors (perhaps by reading sensor data) or trigger some kind of alert or failsafe behavior.
+### Ternary OR Operation
+```mint
+:O              // Ternary OR function
+  b! a!         // Store inputs
+  a t = (       // If a is TRUE
+    t .         // Return TRUE
+  ) /E (        // Else
+    a f = (     // If a is FALSE
+      b .       // Return b
+    ) /E (      // Else (a must be UNKNOWN)
+      b t = (   // If b is TRUE
+        t .     // Return TRUE
+      ) /E (    // Else
+        u .     // Return UNKNOWN
+      )
+    )
+  )
+;
+```
 
-- The main Function serves as the entry point of the program. It first calls initializeMotorPins to set up the GPIO pins. Then, it sets up a hypothetical scenario where the states of the three motors are defined (in this case, the first motor is ON, the second is OFF, and the third is UNKNOWN). It then checks if any of the motors are in an UNKNOWN state and, if so, calls handleUnknownState. If none of the motors are in an UNKNOWN state, it calls controlMotors to apply the desired states to the motors.
+### Ternary NOT Operation  
+```mint
+:N              // Ternary NOT function
+  a!            // Store input
+  a t = (       // If input is TRUE
+    f .         // Return FALSE
+  ) /E (        // Else
+    a f = (     // If input is FALSE
+      t .       // Return TRUE
+    ) /E (      // Else
+      u .       // Return UNKNOWN
+    )
+  )
+;
+```
 
-In summary, this program provides a template for controlling motors with the ability to handle unknown states. However, as it currently stands, it's not a complete application; it would need to be incorporated into a larger program that provides the necessary context (e.g., why and when the motors should be turned on or off) and additional functionality (e.g., determining the actual state of the motors when their state is UNKNOWN).
+## 2. Database Record Implementation
 
-The `MotorState` enum has three possible values: `ON`, `OFF`, and `UNKNOWN`. A clearer representation of the state of each motor is achieved by using this enum, as opposed to using a `bool`. 
+### Record Structure Definition
+```mint
+// Record structure with NULL tracking
+:R                     // Create record structure
+  [ 0                  // Status byte for NULL flags
+    0 0               // Two data fields
+  ] r!                // Store in variable r
+;
 
-The `controlMotors` function has been updated to accept `MotorState` arguments, and the `digitalWrite` calls have been modified to only turn on the motors if their state is `ON`.
+// Set field value with NULL handling
+:S                    // Set field value
+  v! i! r!           // Get record, index, value
+  v u = (            // If value is UNKNOWN
+    r 0? #80 | r 0?! // Set NULL bit
+  ) /E (             // Else
+    r i 1 + v !      // Store value
+  )
+;
+```
 
-Finally, in the `main` function, the check for an unknown motor state has been changed to use the `UNKNOWN` enum value. If any of the motors are in an `UNKNOWN` state, the `handleUnknownState` function is called. Otherwise, the `controlMotors` function is called as before.
+### Record Access with NULL Handling
+```mint
+:G                    // Get field value
+  i! r!              // Get record and index
+  r 0? #80 & (       // Check NULL bit
+    u .              // Return UNKNOWN if NULL
+  ) /E (             // Else
+    r i 1 + ? .      // Return actual value
+  )
+;
+```
 
-## Ref
-- https://github.com/SteveJustin1963/tec-MINT
+## 3. Simple Database Operations
+
+### Initialize Database
+```mint
+:I                    // Initialize database
+  [ 0                // Status byte
+    [ ]              // Empty record array
+  ] d!               // Store in variable d
+;
+```
+
+### Insert Record
+```mint
+:N                    // Insert new record
+  r!                  // Get record
+  d 1? /S s!         // Get size
+  s 1 + d 1?!        // Increment size
+  r d s 1 + !        // Store record
+;
+```
+
+### Simple Query
+```mint
+:Q                    // Query with condition
+  v!                  // Value to match
+  d 1? /S (          // Loop through records
+    d i 2 + ? x!     // Get record
+    x 1? v = (       // If matches
+      x .            // Output record
+    )
+  )
+;
+```
+
+## 4. Index Implementation
+
+### Create Index
+```mint
+:X                    // Create index
+  [ 0                // Count
+    [ ]              // Index entries
+  ] x!
+;
+
+// Add index entry
+:A                    // Add to index
+  v! k!              // Key and value
+  [ k v ]            // Create entry
+  x 1? /S 1 +        // Get new position
+  x 1? !             // Store entry
+;
+```
+
+### Index Lookup
+```mint
+:L                    // Lookup in index
+  k!                  // Key to find
+  x 1? /S (          // Loop through entries
+    x i 1 + ? y!     // Get entry
+    y 0? k = (       // If key matches
+      y 1? .         // Return value
+    )
+  )
+;
+```
+
+## 5. Transaction Log
+
+### Simple Transaction Log
+```mint
+:G                    // Begin transaction
+  [ 0                // Transaction ID
+    [ ]              // Operations list
+  ] t!
+;
+
+// Log operation
+:L                    // Log operation
+  v! o!              // Operation and value
+  [ o v ] n!         // Create log entry
+  t 1? /S 1 +        // Get new position
+  n t 1? !           // Store entry
+;
+```
+
+## 6. Query Examples
+
+### Simple Select Query
+```mint
+:S                    // Select records
+  v!                  // Value to match
+  `Records where value = ` v . /N
+  d 1? /S (          // Loop through records
+    d i 2 + ? r!     // Get record
+    r 1? v = (       // If matches condition
+      `Record ` i . `: ` r . /N  // Output
+    )
+  )
+;
+```
+
+### Range Query
+```mint
+:R                    // Range query
+  h! l!              // High and low values
+  `Records in range ` l . ` to ` h . /N
+  d 1? /S (          // Loop through records
+    d i 2 + ? r!     // Get record
+    r 1? l >=        // Check lower bound
+    r 1? h <= & (    // And upper bound
+      `Record ` i . `: ` r . /N  // Output
+    )
+  )
+;
+```
+
+## 7. Memory Management
+
+### Simple Memory Pool
+```mint
+:P                    // Initialize pool
+  1000 /A p!         // Allocate 1000 bytes
+  0 c!               // Clear counter
+;
+
+// Allocate block
+:A                    // Allocate memory
+  s!                  // Size needed
+  c s + 1000 < (     // If enough space
+    p c + n!         // Calculate address
+    c s + c!         // Update counter
+    n .              // Return address
+  ) /E (             // Else
+    `No space` /N    // Error message
+  )
+;
+```
+
+## Usage Examples
+
+### Initialize and Use Database
+```mint
+I                     // Initialize database
+[ 1 100 ] N          // Insert record
+[ 2 200 ] N          // Insert another
+100 Q                // Query for value 100
+```
+
+### Use Three-Valued Logic
+```mint
+T F A .              // TRUE AND FALSE
+T U O .              // TRUE OR UNKNOWN
+F N .                // NOT FALSE
+```
+
+### Transaction Example
+```mint
+G                     // Begin transaction
+1 `INSERT` L         // Log insert
+2 `UPDATE` L         // Log update
+```
+
+ 
 
