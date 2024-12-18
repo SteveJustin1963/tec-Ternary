@@ -557,5 +557,120 @@ G                     // Begin transaction
 2 `UPDATE` L         // Log update
 ```
 
- 
+ # MINT Motor Control Implementation
+
+## Constants and Variables
+```mint
+// Motor states stored in variables
+// t = ON (TRUE), f = OFF (FALSE), u = UNKNOWN
+#01 t!  // TRUE/ON  = 01
+#00 f!  // FALSE/OFF = 00
+#10 u!  // UNKNOWN = 10
+
+// Motor states stored in a, b, c
+// Output port for 74LS273 (based on schematic)
+#04 p!  // Port for motor control
+```
+
+## Motor Control Functions
+
+### Initialize Motors
+```mint
+:I              // Initialize function
+  #00 p /O      // Clear all outputs
+;
+```
+
+### Set Individual Motor
+```mint
+:M              // Set single motor (takes state and bit position)
+  b! s!         // s = state, b = bit position
+  s t = (       // If state is ON
+    #01 b { p /O  // Shift 1 to position and output
+  ) /E (
+    #00 p /O    // Otherwise output 0
+  )
+;
+```
+
+### Control All Motors
+```mint
+:C              // Control all motors
+  c! b! a!      // Get states for motors 1,2,3
+  // Create output byte
+  a t = ( #01 ) /E ( #00 ) // Motor 1
+  b t = ( #02 | ) /E ( #00 | ) // Motor 2 
+  c t = ( #04 | ) /E ( #00 | ) // Motor 3
+  p /O          // Output to port
+;
+```
+
+### Handle Unknown State
+```mint
+:U              // Unknown state handler
+  `State Unknown` /N  // Print message
+  #00 p /O      // Safety: all motors off
+;
+```
+
+### Main Control Logic
+```mint
+:R              // Run motor control
+  c! b! a!      // Get motor states
+  // Check for unknown states
+  a u = (
+    U           // Handle unknown
+  ) /E (
+    b u = (
+      U
+    ) /E (
+      c u = (
+        U
+      ) /E (
+        C       // All states known, control motors
+      )
+    )
+  )
+;
+```
+
+## Example Usage
+```mint
+// Initialize
+I
+
+// Example: Motor 1 ON, Motor 2 OFF, Motor 3 UNKNOWN
+t f u R
+
+// Example: All motors ON
+t t t R
+
+// Example: All motors OFF 
+f f f R
+```
+
+## Notes:
+
+1. The code uses port 04h for output, which should connect to the 74LS273 latch shown in the schematic.
+
+2. Each motor uses a single bit:
+   - Motor 1: Bit 0
+   - Motor 2: Bit 1
+   - Motor 3: Bit 2
+
+3. The three-valued logic uses:
+   - 01 for ON/TRUE
+   - 00 for OFF/FALSE
+   - 10 for UNKNOWN
+
+4. When any motor state is UNKNOWN, the system defaults to all motors off as a safety measure.
+
+5. The implementation assumes active-high motor control through the 74LS273.
+
+## Hardware Considerations
+
+1. The TEC-1 schematic shows a 74LS273 octal D flip-flop that can be used for output control.
+2. Motor control signals should be connected to the appropriate output pins of the 74LS273.
+3. Additional buffering or driver circuits (not shown in code) may be needed between the 74LS273 and actual motors.
+4. The Z80's I/O port 04h must be properly decoded to select the 74LS273.
 
